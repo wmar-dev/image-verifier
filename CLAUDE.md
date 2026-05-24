@@ -8,14 +8,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Running the script
 
-The environment uses a `uv`-managed Python venv at `~/.venv`. Pillow must be injected at runtime:
+The environment uses a `uv`-managed Python venv. Install dependencies once with `uv sync`, then:
 
 ```bash
 # Scan one or more directories
-uv run --with Pillow python3 verify_images.py <dir1> [dir2 ...]
+uv run python3 verify_images.py <dir1> [dir2 ...]
 
 # Custom CSV output path
-uv run --with Pillow python3 verify_images.py <dir1> --output results.csv
+uv run python3 verify_images.py <dir1> --output results.csv
 ```
 
 Exit code 0 = all images OK; exit code 1 = corruption or bad zips found.

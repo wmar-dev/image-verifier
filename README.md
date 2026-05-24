@@ -6,25 +6,24 @@ Recursively scans directories for zip files and identifies corrupted images insi
 
 - Python 3.14+
 - [uv](https://github.com/astral-sh/uv)
-- Pillow (injected automatically via `uv run --with`)
+- Pillow, rich (installed via `uv sync`)
 
 ## Installation
 
 ```bash
 git clone https://github.com/wmar-dev/image-verifier.git
 cd image-verifier
+uv sync
 ```
-
-No install step needed — `uv run --with Pillow` handles the dependency at runtime.
 
 ## Usage
 
 ```bash
 # Scan one or more directories (recursively finds all zip files)
-uv run --with Pillow python3 verify_images.py <dir1> [dir2 ...]
+uv run python3 verify_images.py <dir1> [dir2 ...]
 
 # Specify a custom CSV output path
-uv run --with Pillow python3 verify_images.py <dir1> --output results.csv
+uv run python3 verify_images.py <dir1> --output results.csv
 ```
 
 ## Output
