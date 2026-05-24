@@ -80,3 +80,7 @@ awk -F',' '$3 == "corrupted" || $3 == "bad_zip" {print $1}' image_report_*.csv |
 ## Supported image formats
 
 `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.tif` `.webp` `.ico`
+
+## License
+
+[MIT](LICENSE)
