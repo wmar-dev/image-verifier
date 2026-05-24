@@ -7,8 +7,10 @@ Usage: python3 verify_images.py <dir1> [dir2 ...] [--output report.csv]
 import argparse
 import csv
 import io
+import os
 import sys
 import zipfile
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from datetime import datetime
 from pathlib import Path
 
@@ -47,17 +49,20 @@ def verify_image(data: bytes) -> tuple[bool, str]:
     return True, ""
 
 
-def scan_zip(zip_path: Path) -> list[dict]:
+def scan_zip(zip_path: Path) -> tuple[list[dict], str]:
     results = []
+    lines = []
     try:
         with zipfile.ZipFile(zip_path, "r") as zf:
             entries = [e for e in zf.infolist() if not e.is_dir()]
-            image_entries = [e for e in entries if Path(e.filename).suffix.lower() in IMAGE_EXTENSIONS]
+            image_entries = [e for e in entries
+                             if Path(e.filename).suffix.lower() in IMAGE_EXTENSIONS
+                             and not Path(e.filename).name.startswith("._")]
 
             if not image_entries:
-                return results
+                return results, ""
 
-            print(f"  {CYAN}{zip_path.name}{RESET}  ({len(image_entries)} image(s))")
+            lines.append(f"  {CYAN}{zip_path.name}{RESET}  ({len(image_entries)} image(s))")
 
             for entry in image_entries:
                 try:
@@ -65,15 +70,15 @@ def scan_zip(zip_path: Path) -> list[dict]:
                 except Exception as e:
                     status = "unreadable"
                     error = f"zip read error: {e}"
-                    print(f"    {RED}✗{RESET} {entry.filename}  — {error}")
+                    lines.append(f"    {RED}✗{RESET} {entry.filename}  — {error}")
                 else:
                     ok, error = verify_image(data)
                     if ok:
                         status = "ok"
-                        print(f"    {GREEN}✓{RESET} {entry.filename}")
+                        lines.append(f"    {GREEN}✓{RESET} {entry.filename}")
                     else:
                         status = "corrupted"
-                        print(f"    {RED}✗{RESET} {entry.filename}  — {error}")
+                        lines.append(f"    {RED}✗{RESET} {entry.filename}  — {error}")
 
                 results.append({
                     "zip_file": str(zip_path),
@@ -85,7 +90,7 @@ def scan_zip(zip_path: Path) -> list[dict]:
                 })
 
     except zipfile.BadZipFile as e:
-        print(f"  {YELLOW}⚠ bad zip:{RESET} {zip_path}  — {e}")
+        lines.append(f"  {YELLOW}⚠ bad zip:{RESET} {zip_path}  — {e}")
         results.append({
             "zip_file": str(zip_path),
             "image_file": "",
@@ -95,9 +100,9 @@ def scan_zip(zip_path: Path) -> list[dict]:
             "uncompressed_size": 0,
         })
     except Exception as e:
-        print(f"  {YELLOW}⚠ error:{RESET} {zip_path}  — {e}")
+        lines.append(f"  {YELLOW}⚠ error:{RESET} {zip_path}  — {e}")
 
-    return results
+    return results, "\n".join(lines)
 
 
 def find_zips(directories: list[Path]) -> list[Path]:
@@ -106,7 +111,7 @@ def find_zips(directories: list[Path]) -> list[Path]:
         if not d.exists():
             print(f"{YELLOW}Warning: directory not found: {d}{RESET}")
             continue
-        zips.extend(sorted(d.rglob("*.zip")))
+        zips.extend(sorted(p for p in d.rglob("*.zip") if not p.name.startswith("._")))
     return zips
 
 
@@ -124,6 +129,8 @@ def main() -> None:
     parser.add_argument("--output", "-o", type=Path,
                         default=Path(f"image_report_{datetime.now():%Y%m%d_%H%M%S}.csv"),
                         help="CSV output path (default: image_report_<timestamp>.csv)")
+    parser.add_argument("--workers", "-w", type=int, default=os.cpu_count(),
+                        help="Number of parallel worker processes (default: cpu count)")
     args = parser.parse_args()
 
     print(f"\n{BOLD}Scanning {len(args.directories)} director(y/ies)...{RESET}\n")
@@ -133,11 +140,21 @@ def main() -> None:
         print("No zip files found.")
         return
 
-    print(f"Found {len(zip_files)} zip file(s)\n")
+    print(f"Found {len(zip_files)} zip file(s)  [workers: {args.workers}]\n")
 
     all_results: list[dict] = []
-    for zp in zip_files:
-        all_results.extend(scan_zip(zp))
+    with ProcessPoolExecutor(max_workers=args.workers) as pool:
+        futures = [pool.submit(scan_zip, zp) for zp in zip_files]
+        try:
+            for future in futures:
+                results, output = future.result()
+                if output:
+                    print(output)
+                all_results.extend(results)
+        except KeyboardInterrupt:
+            print(f"\n{YELLOW}Interrupted — shutting down workers...{RESET}")
+            pool.shutdown(wait=False, cancel_futures=True)
+            sys.exit(130)
 
     # Summary
     total   = len([r for r in all_results if r["image_file"]])
