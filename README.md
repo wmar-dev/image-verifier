@@ -24,6 +24,9 @@ uv run python3 verify_images.py <dir1> [dir2 ...]
 
 # Specify a custom CSV output path
 uv run python3 verify_images.py <dir1> --output results.csv
+
+# Limit parallel workers (default: cpu count)
+uv run python3 verify_images.py <dir1> --workers 4
 ```
 
 ## Output
@@ -31,20 +34,22 @@ uv run python3 verify_images.py <dir1> --output results.csv
 Terminal output shows a live per-file pass/fail as each zip is scanned, followed by a summary:
 
 ```text
-Scanning 1 director(y/ies)...
+Scanning 2 director(y/ies)...
 
-Found 2 zip file(s)
+Found 2 zip file(s)  [workers: 10]
 
   photos.zip  (3 image(s))
     ✓ vacation/img001.jpg
     ✗ vacation/img002.jpg  — truncated or unreadable pixel data
     ✓ vacation/img003.png
-
-──────────────────────────────────────────────────
+  archive.zip  (1 image(s))
+    ✓ scan001.tiff
+ ⠸ Scanning zips ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2/2 0:00:03
+────────────────────────────────────────────────────────────────────────
 Summary
   Zips scanned : 2
-  Images found : 3
-  OK           : 2
+  Images found : 4
+  OK           : 3
   Corrupted    : 1
 
 Report saved to: image_report_20260524_120000.csv
