@@ -17,14 +17,14 @@ from pathlib import Path
 try:
     from PIL import Image, UnidentifiedImageError
 except ImportError:
-    sys.exit("Error: Pillow is required. Run: pip3 install Pillow")
+    sys.exit("Error: Pillow is required. Run: uv add Pillow")
 
 try:
     from rich.progress import BarColumn, MofNCompleteColumn, Progress, SpinnerColumn, TimeElapsedColumn
     from rich.console import Console
     from rich.text import Text
 except ImportError:
-    sys.exit("Error: rich is required. Run: pip3 install rich")
+    sys.exit("Error: rich is required. Run: uv add rich")
 
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".tiff", ".tif", ".webp", ".ico"}
 
