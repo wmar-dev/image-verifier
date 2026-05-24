@@ -8,6 +8,15 @@ Recursively scans directories for zip files and identifies corrupted images insi
 - [uv](https://github.com/astral-sh/uv)
 - Pillow (injected automatically via `uv run --with`)
 
+## Installation
+
+```bash
+git clone https://github.com/wmar-dev/image-verifier.git
+cd image-verifier
+```
+
+No install step needed — `uv run --with Pillow` handles the dependency at runtime.
+
 ## Usage
 
 ```bash
