@@ -158,9 +158,9 @@ def main() -> None:
 
     with progress:
         with ProcessPoolExecutor(max_workers=args.workers) as pool:
-            futures = [pool.submit(scan_zip, zp) for zp in zip_files]
+            futures = {pool.submit(scan_zip, zp): zp for zp in zip_files}
             try:
-                for future in futures:
+                for future in as_completed(futures):
                     results, lines = future.result()
                     for line in lines:
                         progress.console.print(line)
