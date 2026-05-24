@@ -125,7 +125,7 @@ def write_csv(rows: list[dict], output_path: Path) -> None:
         writer.writerows(rows)
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Find corrupted images inside zip files.")
     parser.add_argument("directories", nargs="+", type=Path, help="Directories to scan")
     parser.add_argument("--output", "-o", type=Path,
@@ -133,7 +133,11 @@ def main() -> None:
                         help="CSV output path (default: image_report_<timestamp>.csv)")
     parser.add_argument("--workers", "-w", type=int, default=os.cpu_count(),
                         help="Number of parallel worker processes (default: cpu count)")
-    args = parser.parse_args()
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
 
     console.print(f"\n[bold]Scanning {len(args.directories)} director(y/ies)...[/bold]\n")
 
