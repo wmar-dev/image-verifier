@@ -64,6 +64,19 @@ The CSV contains one row per image with columns: `zip_file`, `image_file`, `stat
 | 0    | All images verified OK                                         |
 | 1    | One or more corrupted/unreadable images or bad zip files found |
 
+## Filtering the CSV report
+
+```bash
+# Show only corrupted images and bad zips
+awk -F',' '$3 == "corrupted" || $3 == "bad_zip"' image_report_*.csv
+
+# Same, but keep the header row
+awk -F',' 'NR==1 || $3 == "corrupted" || $3 == "bad_zip"' image_report_*.csv
+
+# List only the zip files that contain corrupted images (unique paths)
+awk -F',' '$3 == "corrupted" || $3 == "bad_zip" {print $1}' image_report_*.csv | sort -u
+```
+
 ## Supported image formats
 
 `.jpg` `.jpeg` `.png` `.gif` `.bmp` `.tiff` `.tif` `.webp` `.ico`
